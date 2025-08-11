@@ -1,7 +1,8 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { Pool } = require('pg');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // Load environment variables
 dotenv.config();
@@ -22,6 +23,10 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// NOTE: Routes temporarily commented out until we convert routes/submissions.js to ESM
+// const submissionsRouter = require('./routes/submissions');
+// app.use('/api/submissions', submissionsRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -56,7 +61,8 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      testDb: '/api/test-db'
+      testDb: '/api/test-db',
+      submissions: 'Routes temporarily disabled during ESM conversion'
     }
   });
 });
@@ -92,5 +98,5 @@ process.on('SIGTERM', () => {
   });
 });
 
-module.exports = app;
+export default app;
 

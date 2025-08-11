@@ -1,14 +1,22 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
+import pkg from 'pg';
+const { Pool } = pkg;
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-async function setupDatabase() {
+export async function setupDatabase() {
   try {
     console.log('🗄️  Setting up database...');
     
@@ -51,7 +59,7 @@ async function setupDatabase() {
 }
 
 // Run setup if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   setupDatabase()
     .then(() => {
       console.log('🎉 Database setup completed successfully');
@@ -62,6 +70,4 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
-module.exports = { setupDatabase };
 
