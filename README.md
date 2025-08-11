@@ -1,63 +1,81 @@
 # Keylight Backend
 
-Node.js/Express backend for the Keylight intake form system.
+Modern ESM Node.js/Express backend for the Keylight intake form system.
 
-## Overview
+## Architecture
 
-This backend provides REST API endpoints for:
-- Intake form submissions
-- Admin dashboard data
-- Email confirmation system
-- PostgreSQL database integration
-
-## Tech Stack
-
-- Node.js
-- Express.js
-- PostgreSQL
-- Nodemailer (email)
-
-## Database Schema
-
-The application uses a single `intake_submissions` table with the following key fields:
-- Contact details (name, email, phone, company)
-- Buyer category (homebuyer, developer)
-- Financing plans and preferences
-- Land status and location details
-- Build budget and timeline
-- Project description
-- Admin workflow fields (status, notes)
-
-## API Endpoints
-
-### Public Endpoints
-- `POST /api/submissions` - Create new intake submission
-- `GET /health` - Health check
-
-### Admin Endpoints
-- `GET /api/submissions` - List all submissions
-- `GET /api/submissions/:id` - Get single submission
-- `PUT /api/submissions/:id` - Update submission status/notes
-
-## Environment Variables
+This is a modern ESM-first Node.js application with clean separation of concerns:
 
 ```
-DATABASE_URL=postgresql://user:password@host:port/database
-NODE_ENV=production
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
+src/
+├── config/          # Environment and configuration
+├── models/          # Data models and database access
+├── routes/          # API route definitions
+├── middleware/      # Express middleware
+├── services/        # Business logic layer
+└── app.js           # Express application setup
+
+database/
+├── migrations/      # Database schema migrations
+└── seeds/          # Sample data for development
+
+tests/              # Test files
+server.js           # Application entry point
 ```
+
+## Features
+
+- **ESM-native**: Uses modern ES modules throughout
+- **Clean Architecture**: Proper separation of concerns
+- **Environment-based Config**: Flexible configuration management
+- **Migration System**: Proper database schema management
+- **Service Layer**: Business logic separated from routes
+- **Comprehensive Testing**: Built for testability
 
 ## Development
 
 ```bash
+# Install dependencies
 npm install
+
+# Run in development mode
 npm run dev
+
+# Run database migrations
+npm run migrate
+
+# Seed development data
+npm run seed
+
+# Run tests
+npm test
 ```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```
+DATABASE_URL=postgresql://username:password@localhost:5432/keylight_intake_db
+PORT=3000
+NODE_ENV=development
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+ADMIN_PASSWORD=admin123
+```
+
+## API Endpoints
+
+- `GET /health` - Health check
+- `GET /api/test-db` - Database connection test
+- `POST /api/submissions` - Create submission
+- `GET /api/submissions` - List submissions
+- `GET /api/submissions/:id` - Get submission
+- `PUT /api/submissions/:id` - Update submission
 
 ## Deployment
 
-Deployed on Render.com as a Web Service.
+This application is designed to deploy on Render.com with managed PostgreSQL.
 
