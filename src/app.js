@@ -10,6 +10,7 @@ import { testConnection, closePool } from './config/database.js';
 import { errorHandler, asyncHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { securityHeaders, basicRateLimit } from './middleware/security.js';
+import submissionsRouter from './routes/submissions.js';
 
 /**
  * Create and configure Express application
@@ -76,8 +77,12 @@ export function createApp() {
       endpoints: {
         health: 'GET /health',
         testDb: 'GET /api/test-db',
-        submissions: 'GET /api/submissions (coming soon)',
-        createSubmission: 'POST /api/submissions (coming soon)'
+        submissions: 'GET /api/submissions',
+        createSubmission: 'POST /api/submissions',
+        submissionStats: 'GET /api/submissions/stats',
+        searchSubmissions: 'GET /api/submissions/search',
+        submissionById: 'GET /api/submissions/:id',
+        updateStatus: 'PUT /api/submissions/:id/status'
       },
       commands: {
         migrations: 'npm run migrate',
@@ -87,8 +92,8 @@ export function createApp() {
     });
   });
 
-  // API routes will be added here in next chunks
-  // app.use('/api/submissions', submissionsRouter);
+  // API routes
+  app.use('/api/submissions', submissionsRouter);
 
   // 404 handler (before error handler)
   app.use('*', (req, res) => {
