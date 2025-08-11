@@ -6,6 +6,7 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from './config/environment.js';
+import { testConnection, closePool } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 /**
@@ -29,6 +30,37 @@ export function createApp() {
     });
   });
 
+  // Database connection test endpoint
+  app.get('/api/test-db', async (req, res) => {
+    try {
+      const result = await testConnection();
+      
+      if (result.success) {
+        res.json({
+          status: 'Database connected successfully',
+          timestamp: result.timestamp,
+          postgres_version: result.version,
+          pool_stats: {
+            total: result.pool_total,
+            idle: result.pool_idle,
+            waiting: result.pool_waiting
+          }
+        });
+      } else {
+        res.status(500).json({
+          status: 'Database connection failed',
+          error: result.error,
+          code: result.code
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        status: 'Database test failed',
+        error: error.message
+      });
+    }
+  });
+
   // Basic API info endpoint
   app.get('/', (req, res) => {
     res.json({ 
@@ -37,16 +69,10 @@ export function createApp() {
       architecture: 'ESM-native',
       endpoints: {
         health: '/health',
-        testDb: '/api/test-db'
+        testDb: '/api/test-db',
+        migrations: 'npm run migrate',
+        seeds: 'npm run seed'
       }
-    });
-  });
-
-  // Placeholder for database test endpoint (will be added in next chunk)
-  app.get('/api/test-db', (req, res) => {
-    res.json({ 
-      status: 'Database connection not yet configured',
-      message: 'Will be implemented in Chunk 1.2'
     });
   });
 
