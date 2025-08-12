@@ -10,7 +10,19 @@
     "migrate": "node database/migrate.js",
     "seed": "node database/seed.js",
     "test": "node --test tests/**/*.test.js",
-    "test:watch": "node --test --watch tests/**/*.test.js"
+    "test:watch": "node --test --watch tests/**/*.test.js",
+    "curl:health": "./curl-tests/01-health-check.sh",
+    "curl:create": "./curl-tests/02-create-submission.sh",
+    "curl:invalid": "./curl-tests/03-create-invalid-submission.sh",
+    "curl:list": "./curl-tests/04-get-submissions.sh",
+    "curl:stats": "./curl-tests/05-get-stats.sh",
+    "curl:search": "./curl-tests/06-search-submissions.sh",
+    "curl:recent": "./curl-tests/07-get-recent.sh",
+    "curl:update": "./curl-tests/08-update-status.sh",
+    "curl:get": "./curl-tests/09-get-by-id.sh",
+    "curl:status": "./curl-tests/10-get-by-status.sh",
+    "curl:all": "./curl-tests/run-all-tests.sh",
+    "curl:basic": "./curl-tests/01-health-check.sh && ./curl-tests/02-create-submission.sh && ./curl-tests/04-get-submissions.sh"
   },
   "repository": {
     "type": "git",
