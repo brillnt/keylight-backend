@@ -8,6 +8,21 @@ import assert from 'node:assert';
 import { testConnection, closePool } from '../src/config/database.js';
 import SubmissionModel from '../src/models/SubmissionModel.js';
 
+// Force pool cleanup on process termination
+process.on('exit', async () => {
+  await closePool();
+});
+
+process.on('SIGINT', async () => {
+  await closePool();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await closePool();
+  process.exit(0);
+});
+
 describe('Database Connection Tests', () => {
   let submissionModel;
 
