@@ -23,6 +23,15 @@ tests/              # Test files
 server.js           # Application entry point
 ```
 
+## Prerequisites
+
+- **Node.js 18+** - Modern JavaScript runtime
+- **PostgreSQL 14+** - Database server
+- **jq** (optional) - For pretty JSON output in test scripts
+  - Ubuntu/Debian: `sudo apt-get install jq`
+  - macOS: `brew install jq`
+  - Windows: `choco install jq`
+
 ## Features
 
 - **ESM-native**: Uses modern ES modules throughout

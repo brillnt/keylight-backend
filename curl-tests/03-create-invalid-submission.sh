@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Function to format JSON output (use jq if available, otherwise raw)
+format_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq '.'
+    else
+        cat
+    fi
+}
+
 echo "=== Create Invalid Submission Test ==="
 echo "Testing POST /api/submissions with invalid data (should fail)..."
 echo
@@ -17,7 +26,7 @@ curl -X POST http://localhost:3000/api/submissions \
     "build_budget": "",
     "construction_timeline": "",
     "project_description": ""
-  }' | jq '.'
+  }'  | format_json
 
 echo
 echo "✅ Invalid submission test completed (should show validation errors)"

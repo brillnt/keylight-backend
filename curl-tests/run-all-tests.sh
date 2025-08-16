@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Function to format JSON output (use jq if available, otherwise raw)
+format_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq '.'
+    else
+        cat
+    fi
+}
+
 echo "🚀 Running All API Tests"
 echo "========================"
 echo
