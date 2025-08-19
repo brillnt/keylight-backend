@@ -65,13 +65,13 @@ CREATE INDEX idx_projects_clickup_task_id ON projects(clickup_task_id);
 ```
 
 ### 1.3 Verification
-- [ ] Tables created successfully
-- [ ] Indexes created
-- [ ] Foreign key constraints working
-- [ ] Current application still functional
-- [ ] No data loss
+- [x] Tables created successfully
+- [x] Indexes created
+- [x] Foreign key constraints working
+- [x] Current application still functional
+- [x] No data loss
 
-**Status:** ✅ Safe to proceed - no existing functionality affected
+**Status:** ✅ **Completed.** New `users` and `projects` tables created. Verified on both sandbox and local environments.
 
 ---
 
@@ -91,136 +91,95 @@ CREATE INDEX idx_intake_submissions_project_id ON intake_submissions(project_id)
 ```
 
 ### 2.2 Verification
-- [ ] New columns added successfully
-- [ ] Foreign key constraints working
-- [ ] Existing data unaffected (all new columns are NULL)
-- [ ] Current application still functional
-- [ ] Queries still work as before
+- [x] New columns added successfully
+- [x] Foreign key constraints working
+- [x] Existing data unaffected (all new columns are NULL)
+- [x] Current application still functional
+- [x] Queries still work as before
 
-**Status:** ✅ Safe to proceed - existing data intact, application functional
+**Status:** ✅ **Completed.** `user_id` and `project_id` columns added to `intake_submissions`. Verified on both sandbox and local environments.
 
 ---
 
 ## Step 3: Data Migration (Non-Destructive)
 **Goal:** Populate new tables and relationships from existing data
 
-### 3.1 Create Migration Script
-```javascript
-// migration-script.js
-import { pool } from '../src/config/database.js';
+### 3.1 Create Migration Script (Knex.js)
+We have transitioned to using Knex.js for database migrations. The data population logic is now part of a Knex.js migration file.
 
-async function migrateExistingData() {
-    const client = await pool.connect();
-    
-    try {
-        await client.query('BEGIN');
-        
-        // Get all unique users from intake_submissions
-        const submissionsResult = await client.query(`
-            SELECT DISTINCT 
-                full_name, 
-                email_address, 
-                phone_number, 
-                company_name,
-                MIN(created_at) as first_submission
-            FROM intake_submissions 
-            GROUP BY full_name, email_address, phone_number, company_name
-            ORDER BY first_submission
-        `);
-        
-        // Create users and track mapping
-        const userMapping = new Map();
-        
-        for (const submission of submissionsResult.rows) {
-            const userResult = await client.query(`
-                INSERT INTO users (full_name, email_address, phone_number, company_name, created_at)
-                VALUES ($1, $2, $3, $4, $5)
-                RETURNING id
-            `, [
-                submission.full_name,
-                submission.email_address,
-                submission.phone_number,
-                submission.company_name,
-                submission.first_submission
-            ]);
-            
-            const userId = userResult.rows[0].id;
-            const userKey = `${submission.full_name}|${submission.email_address}`;
-            userMapping.set(userKey, userId);
-        }
-        
-        // Create projects for each submission
-        const allSubmissions = await client.query(`
-            SELECT * FROM intake_submissions ORDER BY created_at
-        `);
-        
-        for (const submission of allSubmissions.rows) {
-            const userKey = `${submission.full_name}|${submission.email_address}`;
-            const userId = userMapping.get(userKey);
-            
-            // Create project
-            const projectResult = await client.query(`
-                INSERT INTO projects (
-                    name, description, user_id, buyer_category, financing_plan,
-                    interested_in_preferred_lender, land_status, lot_address,
-                    needs_help_finding_land, preferred_area_description,
-                    build_budget, construction_timeline, created_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-                RETURNING id
-            `, [
-                `Project for ${submission.full_name}`,
-                submission.project_description,
-                userId,
-                submission.buyer_category,
-                submission.financing_plan,
-                submission.interested_in_preferred_lender,
-                submission.land_status,
-                submission.lot_address,
-                submission.needs_help_finding_land,
-                submission.preferred_area_description,
-                submission.build_budget,
-                submission.construction_timeline,
-                submission.created_at
-            ]);
-            
-            const projectId = projectResult.rows[0].id;
-            
-            // Update intake_submission with foreign keys
-            await client.query(`
-                UPDATE intake_submissions 
-                SET user_id = $1, project_id = $2 
-                WHERE id = $3
-            `, [userId, projectId, submission.id]);
-        }
-        
-        await client.query('COMMIT');
-        console.log('✅ Data migration completed successfully');
-        
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('❌ Migration failed:', error);
-        throw error;
-    } finally {
-        client.release();
-    }
-}
+**Knex.js Migration File: `database/knex_migrations/populate_user_project_ids.cjs`**
+```javascript
+// This is a simplified representation of the SQL within the Knex migration
+// The actual Knex migration file uses knex.raw() to execute this SQL.
+
+// Create a temporary table to store unique users
+CREATE TEMPORARY TABLE temp_users (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255) UNIQUE,
+    email_address VARCHAR(255) UNIQUE
+);
+
+// Insert unique users from intake_submissions into temp_users
+INSERT INTO temp_users (full_name, email_address)
+SELECT DISTINCT full_name, email_address
+FROM intake_submissions
+ON CONFLICT (full_name) DO NOTHING;
+
+// Insert new users into the users table from temp_users
+INSERT INTO users (full_name, email_address)
+SELECT tu.full_name, tu.email_address
+FROM temp_users tu
+ON CONFLICT (email_address) DO NOTHING;
+
+// Create a temporary table to store unique projects
+CREATE TEMPORARY TABLE temp_projects (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    description TEXT
+);
+
+// Insert unique projects from intake_submissions into temp_projects
+INSERT INTO temp_projects (name, description)
+SELECT DISTINCT project_description, project_description
+FROM intake_submissions;
+
+// Insert new projects into the projects table from temp_projects
+INSERT INTO projects (name, description)
+SELECT tp.name, tp.description
+FROM temp_projects tp;
+
+// Update intake_submissions with user_id and project_id
+UPDATE intake_submissions
+SET
+    user_id = u.id,
+    project_id = p.id
+FROM
+    users u,
+    projects p
+WHERE
+    intake_submissions.email_address = u.email_address AND
+    intake_submissions.project_description = p.description;
+
+// Clean up temporary tables
+DROP TABLE temp_users;
+DROP TABLE temp_projects;
 ```
 
 ### 3.2 Run Migration
 ```bash
-# Create and run migration script
-node database/migrate-data.js
+# Run Knex.js migration
+./node_modules/.bin/knex migrate:latest --knexfile knexfile.mjs
 ```
 
 ### 3.3 Verification
-- [ ] All existing submissions have corresponding users
-- [ ] All existing submissions have corresponding projects
-- [ ] Foreign key relationships populated correctly
-- [ ] Data integrity maintained
-- [ ] Current application still functional
-- [ ] No data loss or corruption
+- [x] All existing submissions have corresponding users
+- [x] All existing submissions have corresponding projects
+- [x] Foreign key relationships populated correctly
+- [x] Data integrity maintained
+- [x] Current application still functional
+- [x] No data loss or corruption
 
-**Status:** ✅ Safe to proceed - data migrated, application still functional
+**Status:** ✅ **Completed.** Data migrated to `users` and `projects` tables, and `intake_submissions` linked. Verified on both sandbox and local environments.
 
 ---
 
@@ -258,7 +217,7 @@ node database/migrate-data.js
 - [ ] Performance is maintained or improved
 - [ ] No breaking changes for current frontend
 
-**Status:** ✅ Safe to proceed - new functionality added, old functionality preserved
+**Status:** 🚧 **In Progress.** This is our current focus. We are verifying existing application functionality after the database migration.
 
 ---
 
@@ -379,6 +338,8 @@ ALTER COLUMN project_id SET NOT NULL;
 5. **Validate each step** before proceeding
 6. **Document any issues** encountered
 
-**Status:** 📋 Plan ready for review and approval
-**Last Updated:** August 15, 2025
+**Status:** 🚧 **In Progress.** We are currently in Step 4: Updating Application Code, and verifying existing functionality.
+**Last Updated:** August 18, 2025
+
+
 
