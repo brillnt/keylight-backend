@@ -1,6 +1,10 @@
-const path = require("path");
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-module.exports = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default {
   development: {
     client: "pg",
     connection: {
@@ -11,11 +15,11 @@ module.exports = {
       database: "keylight_intake_db",
     },
     migrations: {
-      directory: path.join(__dirname, "database", "knex_migrations"),
+      directory: join(__dirname, "database", "knex_migrations"),
       tableName: "knex_migrations",
     },
     seeds: {
-      directory: path.join(__dirname, "database", "seeds"),
+      directory: join(__dirname, "database", "seeds"),
     },
   },
 
@@ -23,11 +27,11 @@ module.exports = {
     client: "pg",
     connection: process.env.DATABASE_URL,
     migrations: {
-      directory: path.join(__dirname, "database", "knex_migrations"),
+      directory: join(__dirname, "database", "knex_migrations"),
       tableName: "knex_migrations",
     },
     seeds: {
-      directory: path.join(__dirname, "database", "seeds"),
+      directory: join(__dirname, "database", "seeds"),
     },
   },
 };
