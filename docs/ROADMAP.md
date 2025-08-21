@@ -8,36 +8,129 @@ This roadmap outlines the development phases for integrating ClickUp API with ou
 ## Phase 1: Data Model Separation & Restructuring
 **Goal:** Separate Users, Applications, and Projects into distinct entities with proper relationships
 
-### 1.1 Database Schema Updates
+### 1.1 Database Schema Updates ✅ **COMPLETED**
 - [x] Create `users` table (separate from applications)
 - [x] Create `projects` table (one-to-many with applications)
 - [x] Update `intake_submissions` to reference users and projects
 - [x] Add foreign key relationships and constraints
 - [x] Create migration scripts for existing data
 
-**Status:** ✅ **Completed.** Initial database schema separation is complete, including the creation of `users` and `projects` tables, and the addition of `user_id` and `project_id` to `intake_submissions`. Existing data has been migrated and linked. This phase was completed using the new Knex.js migration system.
+### 1.2 **Milestone 1: User Management Foundation** ⏱️ *2-3 days*
 
-### 1.2 API Model Updates
-- [ ] Create `UserModel` class with CRUD operations
-- [ ] Create `ProjectModel` class with CRUD operations
-- [ ] Update `SubmissionModel` to handle relationships
-- [ ] Add validation for cross-entity relationships
+#### Step 1.2.1: UserModel Implementation
+- [ ] Create `src/models/UserModel.js` extending BaseModel
+- [ ] Add user-specific validation methods (email format, uniqueness)
+- [ ] Add email uniqueness check methods
+- [ ] Add relationship queries: `getUserProjects()`, `getUserSubmissions()`
+- [ ] Add user search and filtering methods
+- [ ] **Testing**: Create unit tests for UserModel CRUD operations
 
-### 1.3 Service Layer Updates
-- [ ] Create `UserService` for user management
-- [ ] Create `ProjectService` for project lifecycle
-- [ ] Update `SubmissionService` to coordinate between entities
-- [ ] Add business logic for entity relationships
+#### Step 1.2.2: UserService Implementation
+- [ ] Create `src/services/UserService.js` with business logic
+- [ ] Implement user creation with duplicate email handling
+- [ ] Add user-submission relationship management methods
+- [ ] Add email validation and conflict resolution
+- [ ] Add user update and deletion with cascade handling
+- [ ] **Testing**: Service layer tests with mock data and edge cases
 
-### 1.4 API Endpoints
-- [ ] `/api/users` - User CRUD operations
-- [ ] `/api/projects` - Project management endpoints
-- [ ] Update `/api/submissions` to handle new relationships
-- [ ] Add endpoints for user-project associations
+#### Step 1.2.3: User API Endpoints
+- [ ] Create `src/routes/users.js` with full CRUD endpoints
+- [ ] Add `GET /api/users` - List users with pagination and filtering
+- [ ] Add `POST /api/users` - Create new user with validation
+- [ ] Add `GET /api/users/:id` - Get single user with relationships
+- [ ] Add `PUT /api/users/:id` - Update user information
+- [ ] Add `DELETE /api/users/:id` - Delete user with cascade options
+- [ ] Add `GET /api/users/:id/submissions` - Get user's submissions
+- [ ] Add `GET /api/users/:id/projects` - Get user's projects
+- [ ] Add routes to main app.js routing
+- [ ] **Testing**: Create curl script for user endpoints testing
 
-**Estimated Time:** 1-2 weeks (for remaining sub-phases)
-**Dependencies:** None
-**Testing:** Update all existing tests, add new entity tests
+### 1.3 **Milestone 2: Project Management Foundation** ⏱️ *2-3 days*
+
+#### Step 1.3.1: ProjectModel Implementation
+- [ ] Create `src/models/ProjectModel.js` extending BaseModel
+- [ ] Add project-specific validation (name, description requirements)
+- [ ] Add relationship queries: `getProjectSubmissions()`, `getProjectUsers()`
+- [ ] Add project status management methods
+- [ ] Add project search and filtering capabilities
+- [ ] Add project timeline and budget tracking methods
+- [ ] **Testing**: Unit tests for ProjectModel operations and relationships
+
+#### Step 1.3.2: ProjectService Implementation
+- [ ] Create `src/services/ProjectService.js` for business logic
+- [ ] Implement project lifecycle management (create, update, archive)
+- [ ] Add user-project association logic and validation
+- [ ] Add project status workflow management
+- [ ] Add project analytics and reporting methods
+- [ ] Add project duplicate detection and merging
+- [ ] **Testing**: Service layer tests with complex relationship scenarios
+
+#### Step 1.3.3: Project API Endpoints
+- [ ] Create `src/routes/projects.js` with comprehensive endpoints
+- [ ] Add `GET /api/projects` - List projects with filtering and pagination
+- [ ] Add `POST /api/projects` - Create new project
+- [ ] Add `GET /api/projects/:id` - Get single project with relationships
+- [ ] Add `PUT /api/projects/:id` - Update project information
+- [ ] Add `DELETE /api/projects/:id` - Delete project with cascade handling
+- [ ] Add `GET /api/projects/:id/submissions` - Get project submissions
+- [ ] Add `GET /api/projects/:id/users` - Get project users
+- [ ] Add `POST /api/projects/:id/users/:userId` - Associate user with project
+- [ ] Add `DELETE /api/projects/:id/users/:userId` - Remove user from project
+- [ ] Add routes to main app.js routing
+- [ ] **Testing**: Create curl script for project endpoints testing
+
+### 1.4 **Milestone 3: Enhanced Submission Integration** ⏱️ *2-3 days*
+
+#### Step 1.4.1: Update SubmissionModel
+- [ ] Add relationship validation methods to SubmissionModel
+- [ ] Update submission creation to auto-create/link users and projects
+- [ ] Add methods: `findByUserId()`, `findByProjectId()`, `findByUserEmail()`
+- [ ] Add cascade delete handling and orphan management
+- [ ] Add submission-user-project integrity validation
+- [ ] Add batch operations for relationship updates
+- [ ] **Testing**: Updated submission model tests with relationship scenarios
+
+#### Step 1.4.2: Update SubmissionService
+- [ ] Update SubmissionService to coordinate between all three entities
+- [ ] Modify submission creation to auto-create users from submission data
+- [ ] Add logic to create/link projects based on submission description
+- [ ] Add business rules for entity relationships and data integrity
+- [ ] Add conflict resolution for duplicate users/projects
+- [ ] Add submission migration tools for data cleanup
+- [ ] **Testing**: Integration tests for multi-entity operations and edge cases
+
+#### Step 1.4.3: Update Submission API
+- [ ] Update `POST /api/submissions` to handle automatic user/project creation
+- [ ] Add relationship-based filtering to `GET /api/submissions`
+- [ ] Add query parameters: `?userId=X`, `?projectId=Y`, `?userEmail=Z`
+- [ ] Add `GET /api/submissions/by-user/:userId` endpoint
+- [ ] Add `GET /api/submissions/by-project/:projectId` endpoint
+- [ ] Update submission response to include user and project data
+- [ ] Add endpoints for bulk submission operations
+- [ ] **Testing**: Update existing curl scripts and add new relationship tests
+
+### 1.5 **Milestone 4: Testing & Documentation** ⏱️ *1-2 days*
+
+#### Step 1.5.1: Comprehensive Testing
+- [ ] Update all existing unit tests to work with new relationships
+- [ ] Add integration tests for multi-entity workflows
+- [ ] Add performance tests for relationship queries with large datasets
+- [ ] Create comprehensive curl scripts for all new endpoints
+- [ ] Add error scenario testing (cascade deletes, orphaned records)
+- [ ] Add concurrent operation testing for data integrity
+- [ ] **Testing**: Achieve 90%+ test coverage for new functionality
+
+#### Step 1.5.2: Documentation Updates
+- [ ] Update API documentation with all new endpoints
+- [ ] Create entity relationship diagrams showing Users-Projects-Submissions
+- [ ] Update README.md with new endpoint examples
+- [ ] Document relationship business rules and constraints
+- [ ] Add troubleshooting guide for common relationship issues
+- [ ] Update curl-tests/README.md with new test descriptions
+
+**Estimated Time:** 8-11 days total
+**Dependencies:** Database schema updates (completed)
+**Testing:** Maintain 100% backward compatibility, achieve 90%+ test coverage
 
 ---
 
