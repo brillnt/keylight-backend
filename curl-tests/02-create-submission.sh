@@ -18,7 +18,7 @@ curl -X POST http://localhost:3000/api/submissions \
   -H "Content-Type: application/json" \
   -d '{
     "full_name": "John Test User",
-    "email_address": "john.test@example.com",
+    "email_address": "john.test3@example.com",
     "phone_number": "555-123-4567",
     "company_name": "Test Company",
     "buyer_category": "homebuyer",
