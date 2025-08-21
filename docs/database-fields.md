@@ -1,161 +1,241 @@
-# Customer Data Collection Overview
+# Database Schema Documentation
 
-## What Information We Track
+This document provides a comprehensive overview of the current database structure for the Keylight Backend system.
 
-This document explains all the customer information we collect through our intake form and how it helps our business operations.
-
----
-
-## Contact Information
-
-### **Full Name**
-- **What it tracks:** Customer's complete name
-- **Required:** Yes
-- **What this enables:** Personal communication, record identification, professional correspondence
-
-### **Email Address**
-- **What it tracks:** Primary email contact
-- **Required:** Yes
-- **What this enables:** Digital communication, follow-up sequences, duplicate prevention, account management
-
-### **Phone Number**
-- **What it tracks:** Primary phone contact
-- **Required:** Yes
-- **What this enables:** Direct communication, urgent follow-ups, personal touch in sales process
-
-### **Company Name**
-- **What it tracks:** Business name (if applicable)
-- **Required:** No
-- **What this enables:** Identify commercial vs. residential projects, tailor communication approach
+**Last Updated:** August 21, 2025  
+**Database:** keylight_intake_db  
 
 ---
 
-## Customer Classification
+## Database Overview
 
-### **Buyer Category**
-- **What it tracks:** Type of customer we're working with
-- **Possible values:**
-  - **Homebuyer** = Individual/family building personal residence
-  - **Developer** = Professional building for resale/investment
-- **What this enables:** Customize sales approach, pricing strategy, project complexity expectations, resource allocation
+The system uses a PostgreSQL database with three main tables that handle user management, project tracking, and intake submissions. The database implements a clean separation between users, projects, and submissions with proper foreign key relationships.
 
----
+### Table Relationships
 
-## Financial Information
-
-### **Financing Plan**
-- **What it tracks:** How customer plans to pay for construction
-- **Possible values:**
-  - **Self-funding** = Paying cash, no loan needed
-  - **Finance build** = Will need construction loan
-- **What this enables:** Qualify leads, connect with preferred lenders, timeline planning, risk assessment
-
-### **Interested in Preferred Lender**
-- **What it tracks:** Whether customer wants our lender recommendations
-- **Possible values:** Yes/No
-- **What this enables:** Revenue opportunity through lender partnerships, streamlined financing process
-
-### **Build Budget (Excluding Land)**
-- **What it tracks:** Customer's construction budget range
-- **Possible values:**
-  - **$200,000 – $250,000**
-  - **$250,000 – $350,000**
-  - **$350,000 – $400,000**
-  - **$400,000 – $500,000**
-  - **$500,000+**
-- **What this enables:** Qualify leads, match appropriate home designs, resource planning, profitability analysis
+```
+Users (1) ──→ (Many) Projects
+Users (1) ──→ (Many) Intake Submissions  
+Projects (1) ──→ (Many) Intake Submissions
+```
 
 ---
 
-## Land & Location
+## 👥 Users Table
 
-### **Land Status**
-- **What it tracks:** Customer's land ownership situation
-- **Possible values:**
-  - **Own land** = Already have building site
-  - **Need land** = Must purchase building site
-- **What this enables:** Determine project complexity, timeline, additional services needed
+Stores user account information and contact details.
 
-### **Lot Address**
-- **What it tracks:** Specific address of building site (if owned)
-- **Required:** Only if they own land
-- **What this enables:** Site evaluation, permit research, utility assessment, logistics planning
+### Fields
 
-### **Needs Help Finding Land**
-- **What it tracks:** Whether customer wants land-finding assistance
-- **Possible values:** Yes/No
-- **What this enables:** Additional service opportunity, partnership with realtors, complete project management
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| **id** | Integer | Yes | Auto-increment | Primary key |
+| **full_name** | String (255) | Yes | - | User's complete name |
+| **email_address** | String (255) | Yes | - | Primary email (unique) |
+| **phone_number** | String (20) | No | - | Contact phone number |
+| **company_name** | String (255) | No | - | Business/company name |
+| **created_at** | Timestamp | No | Current time | Record creation date |
+| **updated_at** | Timestamp | No | Current time | Last modification date |
 
-### **Preferred Area Description**
-- **What it tracks:** Where customer wants to build (if they need land)
-- **Required:** Only if they need help finding land
-- **What this enables:** Target land search, understand market preferences, regional planning
+### Constraints & Indexes
 
----
+- **Primary Key:** `id`
+- **Unique Constraint:** `email_address` 
+- **Indexes:**
+  - `idx_users_email` on `email_address`
+  - `idx_users_created_at` on `created_at`
 
-## Project Timeline
+### Relationships
 
-### **Timeline to Start Construction**
-- **What it tracks:** When customer wants to begin building
-- **Possible values:**
-  - **Less than 3 months** = Ready to start immediately
-  - **3 to 6 months** = Planning phase, near-term project
-  - **6 to 12 months** = Medium-term planning
-  - **More than 12 months** = Long-term planning, early inquiry
-- **What this enables:** Prioritize leads, resource scheduling, sales pipeline management, follow-up timing
+- **One-to-Many with Projects:** `users.id` → `projects.user_id` (CASCADE DELETE)
+- **One-to-Many with Submissions:** `users.id` → `intake_submissions.user_id` (SET NULL on DELETE)
 
 ---
 
-## Project Details
+## 📁 Projects Table
 
-### **Project Description**
-- **What it tracks:** Customer's vision and specific requirements
-- **Format:** Open text field
-- **What this enables:** Understand project scope, identify special requirements, prepare accurate proposals, match with appropriate designs
+Stores project information and details from intake forms.
+
+### Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| **id** | Integer | Yes | Auto-increment | Primary key |
+| **name** | String (255) | Yes | - | Project name/title |
+| **description** | Text | No | - | Detailed project description |
+| **status** | String (50) | No | 'planning' | Current project status |
+| **user_id** | Integer | No | - | Foreign key to users table |
+
+#### Project Details from Intake Forms
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| **buyer_category** | String (50) | - | 'homebuyer' or 'developer' |
+| **financing_plan** | String (50) | - | 'self_funding' or 'finance_build' |
+| **interested_in_preferred_lender** | Boolean | false | Wants lender recommendations |
+| **land_status** | String (50) | - | 'own_land' or 'need_land' |
+| **lot_address** | Text | - | Property address if land owned |
+| **needs_help_finding_land** | Boolean | false | Requires land finding assistance |
+| **preferred_area_description** | Text | - | Desired location description |
+| **build_budget** | String (50) | - | Budget range category |
+| **construction_timeline** | String (50) | - | Timeline for construction start |
+
+#### ClickUp Integration (Prepared for Phase 2)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| **clickup_task_id** | String (255) | - | ClickUp task identifier |
+| **clickup_list_id** | String (255) | - | ClickUp list identifier |
+
+#### System Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| **created_at** | Timestamp | Current time | Record creation date |
+| **updated_at** | Timestamp | Current time | Last modification date |
+
+### Constraints & Indexes
+
+- **Primary Key:** `id`
+- **Foreign Key:** `user_id` → `users.id` (CASCADE DELETE)
+- **Indexes:**
+  - `idx_projects_user_id` on `user_id`
+  - `idx_projects_status` on `status`
+  - `idx_projects_created_at` on `created_at`
+  - `idx_projects_clickup_task_id` on `clickup_task_id`
 
 ---
 
-## Internal Tracking
+## 📋 Intake Submissions Table
 
-### **Application Status**
-- **What it tracks:** Where each customer is in our review process
-- **Possible values:**
-  - **New** = Just submitted, hasn't been reviewed yet
-  - **Reviewed** = Team has evaluated the submission
-  - **Qualified** = Good fit for our services, ready for sales contact
-  - **Disqualified** = Not a good fit (budget, timeline, location, etc.)
-  - **Contacted** = Sales team has reached out to customer
-- **What this enables:** Track progress, prioritize follow-ups, measure conversion rates, team coordination
+Stores intake form submissions with rich business logic and validation.
 
-### **Admin Notes**
-- **What it tracks:** Internal team comments and observations
-- **Format:** Open text field
-- **What this enables:** Team communication, track conversation history, note special considerations
+### Contact Information
 
-### **Referral Source**
-- **What it tracks:** How customer found us
-- **Default value:** Ritz-Craft (our current partnership)
-- **What this enables:** Track marketing effectiveness, maintain partner relationships, optimize lead sources
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| **id** | Integer | Yes | Primary key (auto-increment) |
+| **full_name** | String (255) | Yes | Customer's complete name |
+| **email_address** | String (255) | Yes | Primary contact email |
+| **phone_number** | String (20) | Yes | Contact phone number |
+| **company_name** | String (255) | No | Business/company name |
 
-### **Created Date**
-- **What it tracks:** When submission was received
-- **What this enables:** Response time tracking, lead aging analysis, follow-up scheduling
+### Business Classification
 
-### **Last Updated**
-- **What it tracks:** When record was last modified
-- **What this enables:** Track team activity, identify stale leads, audit trail
+| Field | Type | Required | Valid Values | Description |
+|-------|------|----------|--------------|-------------|
+| **buyer_category** | String (50) | Yes | 'homebuyer', 'developer' | Customer type |
+| **financing_plan** | String (50) | Yes | 'self_funding', 'finance_build' | Payment method |
+| **interested_in_preferred_lender** | Boolean | No | Default: false | Wants lender recommendations |
+
+### Land & Location
+
+| Field | Type | Required | Valid Values | Description |
+|-------|------|----------|--------------|-------------|
+| **land_status** | String (50) | Yes | 'own_land', 'need_land' | Land ownership status |
+| **lot_address** | Text | No | - | Property address (if owned) |
+| **needs_help_finding_land** | Boolean | No | Default: false | Requires land assistance |
+| **preferred_area_description** | Text | No | - | Desired location details |
+
+### Project Specifications
+
+| Field | Type | Required | Valid Values | Description |
+|-------|------|----------|--------------|-------------|
+| **build_budget** | String (50) | Yes | '200k_250k', '250k_350k', '350k_400k', '400k_500k', '500k_plus' | Budget range |
+| **construction_timeline** | String (50) | Yes | 'less_than_3_months', '3_to_6_months', '6_to_12_months', 'more_than_12_months' | Start timeline |
+| **project_description** | Text | No | - | Detailed project requirements |
+
+### System & Admin Fields
+
+| Field | Type | Required | Valid Values | Default | Description |
+|-------|------|----------|--------------|---------|-------------|
+| **status** | String (50) | No | 'new', 'reviewed', 'qualified', 'disqualified', 'contacted' | 'new' | Processing status |
+| **admin_notes** | Text | No | - | - | Internal team notes |
+| **referral_source** | String (100) | No | - | 'Ritz-Craft' | How customer found us |
+| **created_at** | Timestamp | No | - | Current time | Submission date |
+| **updated_at** | Timestamp | No | - | Current time | Last modification |
+
+### Relationship Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| **user_id** | Integer | Foreign key to users table |
+| **project_id** | Integer | Foreign key to projects table |
+
+### Constraints & Validation
+
+#### Check Constraints
+- **buyer_category:** Must be 'homebuyer' or 'developer'
+- **financing_plan:** Must be 'self_funding' or 'finance_build'  
+- **land_status:** Must be 'own_land' or 'need_land'
+- **build_budget:** Must be one of the defined budget ranges
+- **construction_timeline:** Must be one of the defined timeline options
+- **status:** Must be one of the defined status values
+
+#### Indexes
+- **Primary Key:** `id`
+- **Performance Indexes:**
+  - `idx_intake_submissions_email` on `email_address`
+  - `idx_intake_submissions_created_at` on `created_at`
+  - `idx_intake_submissions_status` on `status`
+  - `idx_intake_submissions_buyer_category` on `buyer_category`
+  - `idx_intake_submissions_land_status` on `land_status`
+  - `idx_intake_submissions_status_created` on `(status, created_at)`
+  - `idx_intake_submissions_buyer_budget` on `(buyer_category, build_budget)`
+  - `idx_intake_submissions_timeline_status` on `(construction_timeline, status)`
+  - `idx_intake_submissions_active` on `created_at` WHERE status IN ('new', 'reviewed', 'qualified')
+  - `idx_intake_submissions_referral_source` on `referral_source`
+
+#### Foreign Key Constraints
+- **user_id** → `users.id` (SET NULL on DELETE)
+- **project_id** → `projects.id` (SET NULL on DELETE)
+
+#### Triggers
+- **update_intake_submissions_updated_at:** Automatically updates `updated_at` timestamp on record modifications
 
 ---
 
-## Business Intelligence Summary
+## 🔧 Migration System
 
-This data collection enables us to:
+The database uses **Knex.js** for migration management:
 
-1. **Qualify leads effectively** - Budget, timeline, and project type filtering
-2. **Prioritize sales efforts** - Focus on qualified, ready-to-start customers
-3. **Customize our approach** - Different strategies for homebuyers vs. developers
-4. **Track performance** - Conversion rates, response times, lead sources
-5. **Identify opportunities** - Land finding, financing partnerships, upselling
-6. **Plan resources** - Scheduling based on customer timelines and project complexity
-7. **Maintain relationships** - Complete contact history and preferences
+- **knex_migrations** - Tracks applied migrations
+- **knex_migrations_lock** - Prevents concurrent migrations
+- **schema_migrations** - Legacy migration tracking (archived)
+
+### Current Migration Status
+- ✅ Initial schema baseline established
+- ✅ User and project ID population completed
+- ✅ All foreign key relationships established
+- ✅ Full indexing and constraints implemented
+
+---
+
+## 📊 Data Relationships Summary
+
+### User → Projects Relationship
+- **Type:** One-to-Many
+- **Cascade:** DELETE on user removes all projects
+- **Business Rule:** A user can have multiple projects
+
+### User → Submissions Relationship  
+- **Type:** One-to-Many
+- **Cascade:** SET NULL on user delete (preserve submission data)
+- **Business Rule:** A user can have multiple submissions
+
+### Project → Submissions Relationship
+- **Type:** One-to-Many  
+- **Cascade:** SET NULL on project delete (preserve submission data)
+- **Business Rule:** A project can have multiple submissions
+
+---
+
+## 🚀 Future Extensions
+
+The database is prepared for:
+
+- **ClickUp Integration:** Task and list ID fields ready
+- **Enhanced Project Management:** Status workflows and milestone tracking
+- **Audit Trails:** Comprehensive change tracking
+- **Performance Optimization:** Strategic indexing for complex queries
 
