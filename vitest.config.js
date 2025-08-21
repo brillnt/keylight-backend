@@ -5,5 +5,8 @@ export default defineConfig({
   test: {
     // Tell Vitest to run this file before all tests
     setupFiles: ['./tests/setup.js'],
+    
+    // Disable parallel execution to prevent database race conditions
+    threads: false,
   },
 });
