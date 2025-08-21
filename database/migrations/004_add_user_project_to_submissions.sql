@@ -1,4 +1,0 @@
-ALTER TABLE intake_submissions
-ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL;
-

@@ -88,3 +88,22 @@ ADMIN_PASSWORD=admin123
 
 This application is designed to deploy on Render.com with managed PostgreSQL.
 
+## Misc DB commands
+
+```bash
+# Check what tables exist
+psql -d keylight_intake_db -U postgres -h localhost -c "\dt"
+
+# Check intake_submissions structure (especially user_id and project_id columns)
+psql -d keylight_intake_db -U postgres -h localhost -c "\d intake_submissions"
+
+# Check if users table has any data
+psql -d keylight_intake_db -U postgres -h localhost -c "SELECT COUNT(*) FROM users;"
+
+# Check if projects table has any data
+psql -d keylight_intake_db -U postgres -h localhost -c "SELECT COUNT(*) FROM projects;"
+
+# Check if intake_submissions has any data and what the user_id/project_id columns look like
+psql -d keylight_intake_db -U postgres -h localhost -c "SELECT id, full_name, email_address, user_id, project_id FROM intake_submissions LIMIT 5;"
+```
+
