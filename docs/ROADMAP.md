@@ -17,108 +17,169 @@ This roadmap outlines the development phases for integrating ClickUp API with ou
 
 ### 1.2 **Milestone 1: User Management Foundation** ⏱️ *2-3 days*
 
-#### Step 1.2.1: UserModel Implementation
-- [ ] Create `src/models/UserModel.js` extending BaseModel
-- [ ] Add user-specific validation methods (email format, uniqueness)
-- [ ] Add email uniqueness check methods
-- [ ] Add relationship queries: `getUserProjects()`, `getUserSubmissions()`
-- [ ] Add user search and filtering methods
-- [ ] **Testing**: Create unit tests for UserModel CRUD operations
+#### Step 1.2.1: UserModel Implementation ✅ COMPLETED
+- [x] Create `src/models/UserModel.js` extending BaseModel
+- [x] **Test:** Write unit tests for UserModel instantiation and BaseModel inheritance
 
-#### Step 1.2.2: UserService Implementation
+#### Step 1.2.1b: Test Infrastructure Enhancement ✅ COMPLETED  
+- [x] Debug and resolve test database configuration issues
+- [x] Implement complete test isolation approach (Option 1) for integration tests
+- [x] Add `beforeEach` database cleanup to ensure each test starts with clean state
+- [x] Create comprehensive integration test for empty database state
+- [x] Verify all tests pass consistently (14/14 tests passing)
+
+#### Step 1.2.2: UserModel Core Methods 🔄 NEXT UP
+- [ ] Add user-specific validation methods (email format, uniqueness)
+- [ ] **Test:** Write tests for email format validation (valid/invalid emails)
+- [ ] Add email uniqueness check methods
+- [ ] **Test:** Write tests for email uniqueness scenarios (new email, duplicate email)
+- [ ] Add relationship queries: `getUserProjects()`, `getUserSubmissions()`
+- [ ] **Test:** Write tests for relationship queries with mock data
+- [ ] Add user search and filtering methods
+- [ ] **Test:** Write tests for search functionality and edge cases
+
+#### Step 1.2.3: UserService Implementation
 - [ ] Create `src/services/UserService.js` with business logic
+- [ ] **Test:** Write unit tests for UserService instantiation
 - [ ] Implement user creation with duplicate email handling
+- [ ] **Test:** Write tests for user creation (success and duplicate email scenarios)
 - [ ] Add user-submission relationship management methods
+- [ ] **Test:** Write tests for relationship management operations
 - [ ] Add email validation and conflict resolution
+- [ ] **Test:** Write tests for validation edge cases and error handling
 - [ ] Add user update and deletion with cascade handling
-- [ ] **Testing**: Service layer tests with mock data and edge cases
+- [ ] **Test:** Write tests for update/delete operations and cascade behavior
 
 #### Step 1.2.3: User API Endpoints
 - [ ] Create `src/routes/users.js` with full CRUD endpoints
+- [ ] **Test:** Write integration tests for route setup and basic structure
 - [ ] Add `GET /api/users` - List users with pagination and filtering
+- [ ] **Test:** Write integration tests for GET /api/users (pagination, filtering)
 - [ ] Add `POST /api/users` - Create new user with validation
+- [ ] **Test:** Write integration tests for POST /api/users (success/validation errors)
 - [ ] Add `GET /api/users/:id` - Get single user with relationships
+- [ ] **Test:** Write integration tests for GET /api/users/:id (found/not found)
 - [ ] Add `PUT /api/users/:id` - Update user information
+- [ ] **Test:** Write integration tests for PUT /api/users/:id (success/validation/not found)
 - [ ] Add `DELETE /api/users/:id` - Delete user with cascade options
+- [ ] **Test:** Write integration tests for DELETE /api/users/:id (success/not found/cascade)
 - [ ] Add `GET /api/users/:id/submissions` - Get user's submissions
 - [ ] Add `GET /api/users/:id/projects` - Get user's projects
+- [ ] **Test:** Write integration tests for relationship endpoints
 - [ ] Add routes to main app.js routing
-- [ ] **Testing**: Create curl script for user endpoints testing
+- [ ] **Test:** Create curl script for manual user endpoints testing
 
 ### 1.3 **Milestone 2: Project Management Foundation** ⏱️ *2-3 days*
 
 #### Step 1.3.1: ProjectModel Implementation
 - [ ] Create `src/models/ProjectModel.js` extending BaseModel
+- [ ] **Test:** Write unit tests for ProjectModel instantiation and inheritance
 - [ ] Add project-specific validation (name, description requirements)
+- [ ] **Test:** Write tests for project validation rules (required fields, lengths)
 - [ ] Add relationship queries: `getProjectSubmissions()`, `getProjectUsers()`
+- [ ] **Test:** Write tests for relationship queries with various scenarios
 - [ ] Add project status management methods
+- [ ] **Test:** Write tests for status transitions and validation
 - [ ] Add project search and filtering capabilities
+- [ ] **Test:** Write tests for search and filtering functionality
 - [ ] Add project timeline and budget tracking methods
-- [ ] **Testing**: Unit tests for ProjectModel operations and relationships
+- [ ] **Test:** Write tests for timeline and budget operations
 
 #### Step 1.3.2: ProjectService Implementation
 - [ ] Create `src/services/ProjectService.js` for business logic
+- [ ] **Test:** Write unit tests for ProjectService instantiation
 - [ ] Implement project lifecycle management (create, update, archive)
+- [ ] **Test:** Write tests for project lifecycle operations
 - [ ] Add user-project association logic and validation
+- [ ] **Test:** Write tests for user-project associations (success/conflicts)
 - [ ] Add project status workflow management
+- [ ] **Test:** Write tests for status workflow transitions and validation
 - [ ] Add project analytics and reporting methods
+- [ ] **Test:** Write tests for analytics calculations and edge cases
 - [ ] Add project duplicate detection and merging
-- [ ] **Testing**: Service layer tests with complex relationship scenarios
+- [ ] **Test:** Write tests for duplicate detection logic
 
 #### Step 1.3.3: Project API Endpoints
 - [ ] Create `src/routes/projects.js` with comprehensive endpoints
+- [ ] **Test:** Write integration tests for route setup
 - [ ] Add `GET /api/projects` - List projects with filtering and pagination
+- [ ] **Test:** Write integration tests for GET /api/projects (filtering, pagination)
 - [ ] Add `POST /api/projects` - Create new project
+- [ ] **Test:** Write integration tests for POST /api/projects (success/validation)
 - [ ] Add `GET /api/projects/:id` - Get single project with relationships
+- [ ] **Test:** Write integration tests for GET /api/projects/:id
 - [ ] Add `PUT /api/projects/:id` - Update project information
+- [ ] **Test:** Write integration tests for PUT /api/projects/:id
 - [ ] Add `DELETE /api/projects/:id` - Delete project with cascade handling
+- [ ] **Test:** Write integration tests for DELETE /api/projects/:id (cascade behavior)
 - [ ] Add `GET /api/projects/:id/submissions` - Get project submissions
 - [ ] Add `GET /api/projects/:id/users` - Get project users
 - [ ] Add `POST /api/projects/:id/users/:userId` - Associate user with project
 - [ ] Add `DELETE /api/projects/:id/users/:userId` - Remove user from project
+- [ ] **Test:** Write integration tests for all relationship endpoints
 - [ ] Add routes to main app.js routing
-- [ ] **Testing**: Create curl script for project endpoints testing
+- [ ] **Test:** Create curl script for manual project endpoints testing
 
 ### 1.4 **Milestone 3: Enhanced Submission Integration** ⏱️ *2-3 days*
 
 #### Step 1.4.1: Update SubmissionModel
 - [ ] Add relationship validation methods to SubmissionModel
+- [ ] **Test:** Write tests for relationship validation rules
 - [ ] Update submission creation to auto-create/link users and projects
+- [ ] **Test:** Write tests for auto-creation logic (new users, existing users)
 - [ ] Add methods: `findByUserId()`, `findByProjectId()`, `findByUserEmail()`
+- [ ] **Test:** Write tests for new find methods with various scenarios
 - [ ] Add cascade delete handling and orphan management
+- [ ] **Test:** Write tests for cascade delete scenarios and orphan handling
 - [ ] Add submission-user-project integrity validation
+- [ ] **Test:** Write tests for data integrity validation
 - [ ] Add batch operations for relationship updates
-- [ ] **Testing**: Updated submission model tests with relationship scenarios
+- [ ] **Test:** Write tests for batch operations and transaction handling
 
 #### Step 1.4.2: Update SubmissionService
 - [ ] Update SubmissionService to coordinate between all three entities
+- [ ] **Test:** Write integration tests for multi-entity coordination
 - [ ] Modify submission creation to auto-create users from submission data
+- [ ] **Test:** Write tests for automatic user creation from submission data
 - [ ] Add logic to create/link projects based on submission description
+- [ ] **Test:** Write tests for automatic project creation and linking
 - [ ] Add business rules for entity relationships and data integrity
+- [ ] **Test:** Write tests for business rule enforcement
 - [ ] Add conflict resolution for duplicate users/projects
+- [ ] **Test:** Write tests for conflict resolution scenarios
 - [ ] Add submission migration tools for data cleanup
-- [ ] **Testing**: Integration tests for multi-entity operations and edge cases
+- [ ] **Test:** Write tests for data migration and cleanup operations
 
 #### Step 1.4.3: Update Submission API
 - [ ] Update `POST /api/submissions` to handle automatic user/project creation
+- [ ] **Test:** Write integration tests for enhanced submission creation
 - [ ] Add relationship-based filtering to `GET /api/submissions`
+- [ ] **Test:** Write integration tests for relationship filtering
 - [ ] Add query parameters: `?userId=X`, `?projectId=Y`, `?userEmail=Z`
+- [ ] **Test:** Write integration tests for new query parameters
 - [ ] Add `GET /api/submissions/by-user/:userId` endpoint
 - [ ] Add `GET /api/submissions/by-project/:projectId` endpoint
+- [ ] **Test:** Write integration tests for new relationship endpoints
 - [ ] Update submission response to include user and project data
+- [ ] **Test:** Write tests for enhanced response format
 - [ ] Add endpoints for bulk submission operations
-- [ ] **Testing**: Update existing curl scripts and add new relationship tests
+- [ ] **Test:** Write integration tests for bulk operations
 
 ### 1.5 **Milestone 4: Testing & Documentation** ⏱️ *1-2 days*
 
-#### Step 1.5.1: Comprehensive Testing
-- [ ] Update all existing unit tests to work with new relationships
-- [ ] Add integration tests for multi-entity workflows
+#### Step 1.5.1: Comprehensive Testing Review
+- [ ] Review all unit tests for completeness and coverage
+- [ ] **Test:** Run coverage reports and identify gaps
+- [ ] Add missing integration tests for multi-entity workflows
+- [ ] **Test:** Write end-to-end workflow tests (user creation → project → submission)
 - [ ] Add performance tests for relationship queries with large datasets
-- [ ] Create comprehensive curl scripts for all new endpoints
+- [ ] **Test:** Write performance benchmarks for complex queries
+- [ ] Update existing curl scripts for all new endpoints
+- [ ] **Test:** Verify all curl scripts work with new functionality
 - [ ] Add error scenario testing (cascade deletes, orphaned records)
+- [ ] **Test:** Write tests for all error scenarios and edge cases
 - [ ] Add concurrent operation testing for data integrity
-- [ ] **Testing**: Achieve 90%+ test coverage for new functionality
+- [ ] **Test:** Write tests for concurrent operations and race conditions
 
 #### Step 1.5.2: Documentation Updates
 - [ ] Update API documentation with all new endpoints

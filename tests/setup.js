@@ -1,5 +1,5 @@
 // tests/setup.js
-import { beforeAll, afterAll, beforeEach } from 'vitest';
+import { beforeAll, afterAll } from 'vitest';
 import knex from 'knex';
 import config from '../knexfile.mjs';
 
@@ -11,19 +11,18 @@ beforeAll(async () => {
   await db.migrate.latest();
 });
 
-// After each test, truncate all tables to ensure a clean state
-beforeEach(async () => {
-  const tables = await db.raw("SELECT tablename FROM pg_tables WHERE schemaname='public'");
-  for (const table of tables.rows) {
-    if (table.tablename !== 'knex_migrations' && table.tablename !== 'knex_migrations_lock') {
-      await db.raw(`TRUNCATE TABLE "${table.tablename}" RESTART IDENTITY CASCADE`);
-    }
-  }
-});
-
 // After all tests, destroy the database connection
 afterAll(async () => {
   await db.destroy();
 });
+
+// Utility function for tests that need clean database state
+export async function cleanDatabase() {
+  // Truncate tables in the correct order to avoid foreign key conflicts
+  // Child tables first, then parent tables
+  await db.raw('TRUNCATE TABLE "intake_submissions" RESTART IDENTITY CASCADE');
+  await db.raw('TRUNCATE TABLE "projects" RESTART IDENTITY CASCADE');
+  await db.raw('TRUNCATE TABLE "users" RESTART IDENTITY CASCADE');
+}
 
 export { db };
