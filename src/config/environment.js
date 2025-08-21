@@ -21,6 +21,27 @@ function validateEnvironment() {
 }
 
 /**
+ * Get database configuration based on environment
+ */
+function getDatabaseConfig() {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  
+  if (nodeEnv === 'test') {
+    // Use test database configuration
+    return {
+      url: 'postgresql://postgres:postgres@localhost:5432/keylight_intake_db_test',
+      ssl: false
+    };
+  }
+  
+  // Use environment variable for development/production
+  return {
+    url: process.env.DATABASE_URL,
+    ssl: nodeEnv === 'production' ? { rejectUnauthorized: false } : false
+  };
+}
+
+/**
  * Application configuration object
  */
 export const config = {
@@ -29,10 +50,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   
   // Database configuration
-  database: {
-    url: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-  },
+  database: getDatabaseConfig(),
   
   // Email configuration
   email: {
