@@ -54,4 +54,116 @@ describe('UserModel Unit Tests', () => {
       expect(actualProperties).toEqual(expect.arrayContaining(expectedProperties));
     });
   });
+
+  describe('Email Validation', () => {
+    describe('validateEmail() instance method', () => {
+      it('should validate correct email formats', () => {
+        const validEmails = [
+          'user@domain.com',
+          'test.email@example.com',
+          'user+tag@domain.co.uk',
+          'firstname.lastname@company.org',
+          'user123@test-domain.com'
+        ];
+
+        validEmails.forEach(email => {
+          const result = userModel.validateEmail(email);
+          expect(result.isValid).toBe(true);
+          expect(result.error).toBeUndefined();
+        });
+      });
+
+      it('should reject invalid email formats', () => {
+        const invalidEmails = [
+          'notanemail',
+          '@domain.com',
+          'user@',
+          'user.domain.com',
+          'user@domain',
+          'user@.com',
+          'user..email@domain.com',
+          'user@domain..com'
+        ];
+
+        invalidEmails.forEach(email => {
+          const result = userModel.validateEmail(email);
+          expect(result.isValid).toBe(false);
+          expect(result.error).toBeDefined();
+          expect(typeof result.error).toBe('string');
+        });
+      });
+
+      it('should handle edge cases gracefully', () => {
+        const edgeCases = [
+          { input: null, description: 'null' },
+          { input: undefined, description: 'undefined' },
+          { input: '', description: 'empty string' },
+          { input: '   ', description: 'whitespace only' },
+          { input: 123, description: 'number' },
+          { input: {}, description: 'object' }
+        ];
+
+        edgeCases.forEach(({ input, description }) => {
+          const result = userModel.validateEmail(input);
+          expect(result.isValid).toBe(false);
+          expect(result.error).toBeDefined();
+          expect(result.error).toContain('Invalid email format');
+        });
+      });
+    });
+
+    describe('UserModel.isValidEmail() static method', () => {
+      it('should validate emails without instantiating UserModel', () => {
+        expect(UserModel.isValidEmail('test@example.com')).toBe(true);
+        expect(UserModel.isValidEmail('invalid-email')).toBe(false);
+        expect(UserModel.isValidEmail(null)).toBe(false);
+      });
+
+      it('should work identically to instance method for valid emails', () => {
+        const testEmails = ['user@domain.com', 'test+tag@example.co.uk'];
+        
+        testEmails.forEach(email => {
+          const staticResult = UserModel.isValidEmail(email);
+          const instanceResult = userModel.validateEmail(email);
+          expect(staticResult).toBe(instanceResult.isValid);
+        });
+      });
+
+      it('should handle edge cases efficiently', () => {
+        // Test performance-focused edge case handling
+        expect(UserModel.isValidEmail(null)).toBe(false);
+        expect(UserModel.isValidEmail(undefined)).toBe(false);
+        expect(UserModel.isValidEmail('')).toBe(false);
+        expect(UserModel.isValidEmail('   ')).toBe(false);
+        expect(UserModel.isValidEmail(123)).toBe(false);
+      });
+    });
+
+    describe('UserModel.validateEmailDetailed() static method (bonus feature)', () => {
+      it('should provide detailed validation without instantiation', () => {
+        const result = UserModel.validateEmailDetailed('test@example.com');
+        expect(result.isValid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+
+      it('should provide detailed error information for invalid emails', () => {
+        const result = UserModel.validateEmailDetailed('invalid-email');
+        expect(result.isValid).toBe(false);
+        expect(result.error).toBeDefined();
+        expect(typeof result.error).toBe('string');
+      });
+
+      it('should match instance method results exactly', () => {
+        const testCases = ['valid@email.com', 'invalid', null, '', '   '];
+        
+        testCases.forEach(testCase => {
+          const staticResult = UserModel.validateEmailDetailed(testCase);
+          const instanceResult = userModel.validateEmail(testCase);
+          
+          expect(staticResult.isValid).toBe(instanceResult.isValid);
+          expect(staticResult.error).toBe(instanceResult.error);
+        });
+      });
+    });
+  });
 });
