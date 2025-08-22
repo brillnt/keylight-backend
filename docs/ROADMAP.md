@@ -28,9 +28,9 @@ This roadmap outlines the development phases for integrating ClickUp API with ou
 - [x] Create comprehensive integration test for empty database state
 - [x] Verify all tests pass consistently (14/14 tests passing)
 
-#### Step 1.2.2: UserModel Core Methods 🔄 NEXT UP
-- [ ] Add user-specific validation methods (email format, uniqueness)
-- [ ] **Test:** Write tests for email format validation (valid/invalid emails)
+#### Step 1.2.2: UserModel Core Methods 🔄 IN PROGRESS
+- [x] Add user-specific validation methods (email format, uniqueness)
+- [x] **Test:** Write tests for email format validation (valid/invalid emails)
 - [ ] Add email uniqueness check methods
 - [ ] **Test:** Write tests for email uniqueness scenarios (new email, duplicate email)
 - [ ] Add relationship queries: `getUserProjects()`, `getUserSubmissions()`

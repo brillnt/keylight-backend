@@ -4,7 +4,7 @@ import knex from 'knex';
 import config from '../knexfile.mjs';
 
 // Create a new Knex instance for the test database
-const db = knex(config.test);
+export const db = knex(config.test);
 
 // Before all tests, run migrations to ensure the schema is up to date
 beforeAll(async () => {

@@ -12,12 +12,40 @@ export class BaseModel {
   }
 
   /**
-   * Execute a query with error handling
+   * Get the appropriate database connection based on environment
+   */
+  async getDbConnection() {
+    if (process.env.NODE_ENV === 'test') {
+      // In test environment, use knex connection for consistency with test setup
+      const { db } = await import('../../tests/setup.js');
+      return db;
+    }
+    // In production/development, use the regular pg.Pool connection
+    return { query };
+  }
+
+  /**
+   * Execute a query with error handling and environment-aware connection
    */
   async executeQuery(sql, params = []) {
     try {
-      const result = await query(sql, params);
-      return result;
+      const connection = await this.getDbConnection();
+      
+      if (process.env.NODE_ENV === 'test') {
+        // Convert PostgreSQL $1, $2... syntax to knex ? syntax for test environment
+        let knexSql = sql;
+        for (let i = 1; i <= params.length; i++) {
+          knexSql = knexSql.replace(`$${i}`, '?');
+        }
+        
+        // Use knex raw query in test environment
+        const result = await connection.raw(knexSql, params);
+        return result.rows;
+      } else {
+        // Use regular pg.Pool query in production/development
+        const result = await connection.query(sql, params);
+        return result;
+      }
     } catch (error) {
       console.error(`Database query failed: ${sql}`, error);
       throw new DatabaseError(`Database operation failed: ${error.message}`, error);

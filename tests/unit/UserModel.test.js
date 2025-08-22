@@ -166,4 +166,54 @@ describe('UserModel Unit Tests', () => {
       });
     });
   });
+
+  describe('Email Uniqueness Checking', () => {
+    describe('emailExists() method', () => {
+      it('should return false for non-existent email', async () => {
+        const result = await userModel.emailExists('nonexistent@example.com');
+        expect(result).toBe(false);
+      });
+
+      it('should handle invalid email formats gracefully', async () => {
+        const result = await userModel.emailExists('not-an-email');
+        expect(result).toBe(false);
+      });
+
+      it('should handle edge cases', async () => {
+        expect(await userModel.emailExists(null)).toBe(false);
+        expect(await userModel.emailExists(undefined)).toBe(false);
+        expect(await userModel.emailExists('')).toBe(false);
+      });
+    });
+
+    describe('findByEmail() method', () => {
+      it('should return null for non-existent email', async () => {
+        const result = await userModel.findByEmail('nonexistent@example.com');
+        expect(result).toBe(null);
+      });
+
+      it('should handle invalid email formats gracefully', async () => {
+        const result = await userModel.findByEmail('not-an-email');
+        expect(result).toBe(null);
+      });
+
+      it('should handle edge cases', async () => {
+        expect(await userModel.findByEmail(null)).toBe(null);
+        expect(await userModel.findByEmail(undefined)).toBe(null);
+        expect(await userModel.findByEmail('')).toBe(null);
+      });
+    });
+
+    describe('UserModel.emailExists() static method', () => {
+      it('should work without instantiating UserModel', async () => {
+        const result = await UserModel.emailExists('static.test@example.com');
+        expect(result).toBe(false);
+      });
+
+      it('should handle edge cases', async () => {
+        expect(await UserModel.emailExists(null)).toBe(false);
+        expect(await UserModel.emailExists('')).toBe(false);
+      });
+    });
+  });
 });

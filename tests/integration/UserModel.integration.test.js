@@ -78,6 +78,84 @@ describe('UserModel Integration Tests', () => {
     });
   });
 
+  describe('Email Uniqueness Integration', () => {
+    it('should detect existing emails in database', async () => {
+      // Insert a test user directly into database
+      const testUser = {
+        full_name: 'Test User',
+        email_address: 'existing@example.com',
+        phone_number: '555-0123'
+      };
+
+      await db('users').insert(testUser);
+
+      // Test that emailExists detects the existing email
+      const exists = await userModel.emailExists('existing@example.com');
+      expect(exists).toBe(true);
+
+      // Test that non-existing email returns false
+      const notExists = await userModel.emailExists('notfound@example.com');
+      expect(notExists).toBe(false);
+    });
+
+    it('should handle case-insensitive email checking', async () => {
+      // Insert user with lowercase email
+      const testUser = {
+        full_name: 'Case Test User',
+        email_address: 'casetest@example.com',
+        phone_number: '555-0124'
+      };
+
+      await db('users').insert(testUser);
+
+      // Test case-insensitive matching
+      expect(await userModel.emailExists('casetest@example.com')).toBe(true);
+      expect(await userModel.emailExists('CASETEST@EXAMPLE.COM')).toBe(true);
+      expect(await userModel.emailExists('CaseTest@Example.Com')).toBe(true);
+    });
+
+    it('should find users by email address', async () => {
+      // Insert a test user
+      const testUser = {
+        full_name: 'Find Me User',
+        email_address: 'findme@example.com',
+        phone_number: '555-0125'
+      };
+
+      const [insertedId] = await db('users').insert(testUser).returning('id');
+
+      // Test findByEmail
+      const foundUser = await userModel.findByEmail('findme@example.com');
+      expect(foundUser).toBeDefined();
+      expect(foundUser.email_address).toBe('findme@example.com');
+      expect(foundUser.full_name).toBe('Find Me User');
+      expect(foundUser.id).toBe(insertedId.id);
+
+      // Test case-insensitive search
+      const foundUserCaseInsensitive = await userModel.findByEmail('FINDME@EXAMPLE.COM');
+      expect(foundUserCaseInsensitive).toBeDefined();
+      expect(foundUserCaseInsensitive.id).toBe(insertedId.id);
+    });
+
+    it('should work with static methods', async () => {
+      // Insert test data
+      const testUser = {
+        full_name: 'Static Test User',
+        email_address: 'static@example.com',
+        phone_number: '555-0126'
+      };
+
+      await db('users').insert(testUser);
+
+      // Test static emailExists method
+      const staticResult = await UserModel.emailExists('static@example.com');
+      expect(staticResult).toBe(true);
+
+      const staticNotFound = await UserModel.emailExists('notfound@static.com');
+      expect(staticNotFound).toBe(false);
+    });
+  });
+
   describe('Database Integration Readiness', () => {
     it('should be ready for email uniqueness checking implementation', async () => {
       // This test documents the foundation for our next mini-mission
