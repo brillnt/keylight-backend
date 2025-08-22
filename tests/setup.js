@@ -16,15 +16,16 @@ afterAll(async () => {
   await db.destroy();
 });
 
-// Enhanced utility function for tests that need clean database state
-// Using DELETE instead of TRUNCATE to avoid deadlock issues
+// Enhanced database cleanup with proper foreign key handling
 export async function cleanDatabase() {
   try {
-    // Use DELETE instead of TRUNCATE to avoid table-level locks that cause deadlocks
-    // Delete in correct order to avoid foreign key conflicts
-    await db('intake_submissions').del();
-    await db('projects').del();  
-    await db('users').del();
+    // Use a single transaction for all cleanup operations to ensure atomicity
+    await db.transaction(async (trx) => {
+      // Delete in correct order to avoid foreign key conflicts
+      await trx('intake_submissions').del();
+      await trx('projects').del();
+      await trx('users').del();
+    });
     
     // Note: We don't reset sequences - tests shouldn't depend on specific IDs
     // This is more realistic (production doesn't reset IDs) and avoids FK constraint issues
