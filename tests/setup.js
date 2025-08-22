@@ -26,14 +26,10 @@ export async function cleanDatabase() {
     await db('projects').del();  
     await db('users').del();
     
-    // Reset sequences manually since DELETE doesn't reset them
-    await db.raw('ALTER SEQUENCE intake_submissions_id_seq RESTART WITH 1');
-    await db.raw('ALTER SEQUENCE projects_id_seq RESTART WITH 1');
-    await db.raw('ALTER SEQUENCE users_id_seq RESTART WITH 1');
+    // Note: We don't reset sequences - tests shouldn't depend on specific IDs
+    // This is more realistic (production doesn't reset IDs) and avoids FK constraint issues
   } catch (error) {
     console.error('Error cleaning database:', error);
     throw error;
   }
 }
-
-export { db };
