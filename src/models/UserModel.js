@@ -217,7 +217,126 @@ export class UserModel extends BaseModel {
     }
   }
 
-  // TODO: Add relationship queries (getUserProjects, getUserSubmissions)
+  /**
+   * Get all projects for a specific user
+   * @param {number} userId - User ID to get projects for
+   * @returns {Promise<Array>} Array of user's projects
+   */
+  async getUserProjects(userId) {
+    try {
+      // Handle invalid user IDs
+      if (!userId || isNaN(userId)) {
+        return [];
+      }
+
+      // SQL query to join users and projects tables
+      const sql = `
+        SELECT 
+          p.id,
+          p.name,
+          p.description,
+          p.status,
+          p.buyer_category,
+          p.financing_plan,
+          p.land_status,
+          p.build_budget,
+          p.construction_timeline,
+          p.created_at,
+          p.updated_at
+        FROM projects p
+        WHERE p.user_id = $1
+        ORDER BY p.created_at DESC
+      `;
+
+      const result = await this.executeQuery(sql, [userId]);
+      return result.rows || [];
+    } catch (error) {
+      console.error(`Error getting user projects for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all submissions for a specific user
+   * @param {number} userId - User ID to get submissions for
+   * @returns {Promise<Array>} Array of user's submissions
+   */
+  async getUserSubmissions(userId) {
+    try {
+      // Handle invalid user IDs
+      if (!userId || isNaN(userId)) {
+        return [];
+      }
+
+      // SQL query to get submissions for user, with optional project data
+      const sql = `
+        SELECT 
+          s.id,
+          s.full_name,
+          s.email_address,
+          s.phone_number,
+          s.company_name,
+          s.buyer_category,
+          s.financing_plan,
+          s.interested_in_preferred_lender,
+          s.land_status,
+          s.lot_address,
+          s.needs_help_finding_land,
+          s.preferred_area_description,
+          s.build_budget,
+          s.construction_timeline,
+          s.project_description,
+          s.status,
+          s.admin_notes,
+          s.referral_source,
+          s.created_at,
+          s.updated_at,
+          s.project_id,
+          p.name as project_name
+        FROM intake_submissions s
+        LEFT JOIN projects p ON s.project_id = p.id
+        WHERE s.user_id = $1
+        ORDER BY s.created_at DESC
+      `;
+
+      const result = await this.executeQuery(sql, [userId]);
+      return result.rows || [];
+    } catch (error) {
+      console.error(`Error getting user submissions for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Static method to get user projects without instantiation
+   * @param {number} userId - User ID to get projects for
+   * @returns {Promise<Array>} Array of user's projects
+   */
+  static async getUserProjects(userId) {
+    try {
+      const tempUserModel = new UserModel();
+      return await tempUserModel.getUserProjects(userId);
+    } catch (error) {
+      console.error('Error in static getUserProjects:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Static method to get user submissions without instantiation
+   * @param {number} userId - User ID to get submissions for
+   * @returns {Promise<Array>} Array of user's submissions
+   */
+  static async getUserSubmissions(userId) {
+    try {
+      const tempUserModel = new UserModel();
+      return await tempUserModel.getUserSubmissions(userId);
+    } catch (error) {
+      console.error('Error in static getUserSubmissions:', error);
+      return [];
+    }
+  }
+
   // TODO: Add search and filtering capabilities
   // TODO: Override create() and updateById() with validation
 }

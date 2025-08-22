@@ -216,4 +216,102 @@ describe('UserModel Unit Tests', () => {
       });
     });
   });
+
+  describe('Relationship Queries', () => {
+    describe('getUserProjects() method', () => {
+      it('should return empty array for user with no projects', async () => {
+        const userModel = new UserModel();
+        const projects = await userModel.getUserProjects(999); // Non-existent user ID
+        expect(Array.isArray(projects)).toBe(true);
+        expect(projects).toHaveLength(0);
+      });
+
+      it('should return projects array with correct structure', async () => {
+        const userModel = new UserModel();
+        const projects = await userModel.getUserProjects(1);
+        expect(Array.isArray(projects)).toBe(true);
+        
+        if (projects.length > 0) {
+          const project = projects[0];
+          expect(project).toHaveProperty('id');
+          expect(project).toHaveProperty('name');
+          expect(project).toHaveProperty('description');
+          expect(project).toHaveProperty('status');
+          expect(project).toHaveProperty('created_at');
+        }
+      });
+
+      it('should handle invalid user IDs gracefully', async () => {
+        const userModel = new UserModel();
+        expect(await userModel.getUserProjects(null)).toEqual([]);
+        expect(await userModel.getUserProjects(undefined)).toEqual([]);
+        expect(await userModel.getUserProjects('invalid')).toEqual([]);
+      });
+    });
+
+    describe('getUserSubmissions() method', () => {
+      it('should return empty array for user with no submissions', async () => {
+        const userModel = new UserModel();
+        const submissions = await userModel.getUserSubmissions(999); // Non-existent user ID
+        expect(Array.isArray(submissions)).toBe(true);
+        expect(submissions).toHaveLength(0);
+      });
+
+      it('should return submissions array with correct structure', async () => {
+        const userModel = new UserModel();
+        const submissions = await userModel.getUserSubmissions(1);
+        expect(Array.isArray(submissions)).toBe(true);
+        
+        if (submissions.length > 0) {
+          const submission = submissions[0];
+          expect(submission).toHaveProperty('id');
+          expect(submission).toHaveProperty('full_name');
+          expect(submission).toHaveProperty('email_address');
+          expect(submission).toHaveProperty('status');
+          expect(submission).toHaveProperty('created_at');
+          // Optional project info if linked
+          if (submission.project_id) {
+            expect(submission).toHaveProperty('project_name');
+          }
+        }
+      });
+
+      it('should handle invalid user IDs gracefully', async () => {
+        const userModel = new UserModel();
+        expect(await userModel.getUserSubmissions(null)).toEqual([]);
+        expect(await userModel.getUserSubmissions(undefined)).toEqual([]);
+        expect(await userModel.getUserSubmissions('invalid')).toEqual([]);
+      });
+
+      it('should return submissions ordered by creation date (newest first)', async () => {
+        const userModel = new UserModel();
+        const submissions = await userModel.getUserSubmissions(1);
+        
+        if (submissions.length > 1) {
+          for (let i = 0; i < submissions.length - 1; i++) {
+            const current = new Date(submissions[i].created_at);
+            const next = new Date(submissions[i + 1].created_at);
+            expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
+          }
+        }
+      });
+    });
+
+    describe('UserModel static relationship methods', () => {
+      it('should provide static getUserProjects method', async () => {
+        const projects = await UserModel.getUserProjects(1);
+        expect(Array.isArray(projects)).toBe(true);
+      });
+
+      it('should provide static getUserSubmissions method', async () => {
+        const submissions = await UserModel.getUserSubmissions(1);
+        expect(Array.isArray(submissions)).toBe(true);
+      });
+
+      it('should handle edge cases in static methods', async () => {
+        expect(await UserModel.getUserProjects(null)).toEqual([]);
+        expect(await UserModel.getUserSubmissions(null)).toEqual([]);
+      });
+    });
+  });
 });

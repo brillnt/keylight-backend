@@ -177,4 +177,189 @@ describe('UserModel Integration Tests', () => {
       expect(true).toBe(true); // Test setup verification complete
     });
   });
+
+  describe('Relationship Query Integration', () => {
+    it('should retrieve user projects with real database relationships', async () => {
+      const userModel = new UserModel();
+      
+      // Create test user
+      const testUser = {
+        full_name: 'Project Test User',
+        email_address: 'project.user@example.com',
+        phone_number: '555-0123',
+        company_name: 'Test Projects Inc'
+      };
+      
+      const insertedUser = await db('users').insert(testUser).returning('*');
+      const userId = insertedUser[0].id;
+      
+      // Create test projects for this user
+      const testProjects = [
+        {
+          name: 'Test Project 1',
+          description: 'First test project',
+          status: 'planning',
+          user_id: userId,
+          buyer_category: 'homebuyer',
+          build_budget: '250k_350k'
+        },
+        {
+          name: 'Test Project 2', 
+          description: 'Second test project',
+          status: 'active',
+          user_id: userId,
+          buyer_category: 'developer',
+          build_budget: '500k_plus'
+        }
+      ];
+      
+      await db('projects').insert(testProjects);
+      
+      // Test getUserProjects method
+      const projects = await userModel.getUserProjects(userId);
+      expect(Array.isArray(projects)).toBe(true);
+      expect(projects).toHaveLength(2);
+      expect(projects[0]).toHaveProperty('name');
+      expect(projects[0]).toHaveProperty('status');
+      expect(projects[1]).toHaveProperty('name');
+      expect(projects[1]).toHaveProperty('status');
+    });
+
+    it('should retrieve user submissions with real database relationships', async () => {
+      const userModel = new UserModel();
+      
+      // Create test user
+      const testUser = {
+        full_name: 'Submission Test User',
+        email_address: 'submission.user@example.com',
+        phone_number: '555-0456'
+      };
+      
+      const insertedUser = await db('users').insert(testUser).returning('*');
+      const userId = insertedUser[0].id;
+      
+      // Create test submissions for this user
+      const testSubmissions = [
+        {
+          full_name: 'Submission Test User',
+          email_address: 'submission.user@example.com',
+          phone_number: '555-0456',
+          buyer_category: 'homebuyer',
+          financing_plan: 'finance_build',
+          land_status: 'need_land',
+          build_budget: '350k_400k',
+          construction_timeline: '6_to_12_months',
+          project_description: 'Test submission 1',
+          status: 'new',
+          user_id: userId
+        },
+        {
+          full_name: 'Submission Test User',
+          email_address: 'submission.user@example.com', 
+          phone_number: '555-0456',
+          buyer_category: 'developer',
+          financing_plan: 'self_funding',
+          land_status: 'own_land',
+          build_budget: '500k_plus',
+          construction_timeline: '3_to_6_months',
+          project_description: 'Test submission 2',
+          status: 'reviewed',
+          user_id: userId
+        }
+      ];
+      
+      await db('intake_submissions').insert(testSubmissions);
+      
+      // Test getUserSubmissions method
+      const submissions = await userModel.getUserSubmissions(userId);
+      expect(Array.isArray(submissions)).toBe(true);
+      expect(submissions).toHaveLength(2);
+      expect(submissions[0]).toHaveProperty('full_name');
+      expect(submissions[0]).toHaveProperty('status');
+      expect(submissions[1]).toHaveProperty('full_name');
+      expect(submissions[1]).toHaveProperty('status');
+      
+      // Verify submissions are ordered by created_at (newest first)
+      if (submissions.length > 1) {
+        const firstDate = new Date(submissions[0].created_at);
+        const secondDate = new Date(submissions[1].created_at);
+        expect(firstDate.getTime()).toBeGreaterThanOrEqual(secondDate.getTime());
+      }
+    });
+
+    it('should work with static methods for service layer usage', async () => {
+      // Create test user
+      const testUser = {
+        full_name: 'Static Test User',
+        email_address: 'static.test@example.com',
+        phone_number: '555-0789'
+      };
+      
+      const insertedUser = await db('users').insert(testUser).returning('*');
+      const userId = insertedUser[0].id;
+      
+      // Test static methods work without instantiation
+      const projects = await UserModel.getUserProjects(userId);
+      const submissions = await UserModel.getUserSubmissions(userId);
+      
+      expect(Array.isArray(projects)).toBe(true);
+      expect(Array.isArray(submissions)).toBe(true);
+    });
+
+    it('should handle users with mixed relationship data', async () => {
+      const userModel = new UserModel();
+      
+      // Create user with both projects and submissions
+      const testUser = {
+        full_name: 'Mixed Data User',
+        email_address: 'mixed.data@example.com',
+        phone_number: '555-0999'
+      };
+      
+      const insertedUser = await db('users').insert(testUser).returning('*');
+      const userId = insertedUser[0].id;
+      
+      // Create project
+      const testProject = {
+        name: 'Mixed Test Project',
+        description: 'Project with linked submission',
+        status: 'planning',
+        user_id: userId,
+        buyer_category: 'homebuyer'
+      };
+      
+      const insertedProject = await db('projects').insert(testProject).returning('*');
+      const projectId = insertedProject[0].id;
+      
+      // Create submission linked to both user and project
+      const testSubmission = {
+        full_name: 'Mixed Data User',
+        email_address: 'mixed.data@example.com',
+        phone_number: '555-0999',
+        buyer_category: 'homebuyer',
+        financing_plan: 'finance_build',
+        land_status: 'own_land',
+        build_budget: '400k_500k',
+        construction_timeline: 'less_than_3_months',
+        project_description: 'Mixed relationship test',
+        status: 'qualified',
+        user_id: userId,
+        project_id: projectId
+      };
+      
+      await db('intake_submissions').insert(testSubmission);
+      
+      // Test both relationship methods
+      const projects = await userModel.getUserProjects(userId);
+      const submissions = await userModel.getUserSubmissions(userId);
+      
+      expect(projects).toHaveLength(1);
+      expect(submissions).toHaveLength(1);
+      
+      // Verify the submission might include project information
+      if (submissions[0].project_id) {
+        expect(submissions[0].project_id).toBe(projectId);
+      }
+    });
+  });
 });
