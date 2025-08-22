@@ -32,16 +32,17 @@ export class UserModel extends BaseModel {
   async _executeCompatibleQuery(sql, params = []) {
     const testDb = await this._getDbClient();
     if (testDb) {
-      // Convert PostgreSQL $1 syntax to knex binding style
+      // Convert PostgreSQL $1 syntax to knex binding style for tests
       let knexSql = sql;
       params.forEach((param, index) => {
         knexSql = knexSql.replace(`$${index + 1}`, '?');
       });
       const result = await testDb.raw(knexSql, params);
-      return result.rows;
+      return { rows: result.rows }; // Return in standardized format
     }
-    // Use BaseModel's method for production
-    return this.executeQuery(sql, params);
+    
+    // Use BaseModel's standardized method for all environments
+    return super.executeQuery(sql, params);
   }
 
   /**
@@ -140,11 +141,11 @@ export class UserModel extends BaseModel {
       );
 
       // Handle case where result might be empty or malformed
-      if (!result || result.length === 0 || !result[0]) {
+      if (!result || !result.rows || result.rows.length === 0 || !result.rows[0]) {
         return false;
       }
 
-      return parseInt(result[0].count) > 0;
+      return parseInt(result.rows[0].count) > 0;
     } catch (error) {
       console.error('Error checking email existence:', error);
       return false;
@@ -175,11 +176,11 @@ export class UserModel extends BaseModel {
       );
 
       // Handle case where results might be empty or malformed
-      if (!results || results.length === 0) {
+      if (!results || !results.rows || results.rows.length === 0) {
         return null;
       }
 
-      return results[0] || null;
+      return results.rows[0] || null;
     } catch (error) {
       console.error('Error finding user by email:', error);
       return null;
@@ -209,7 +210,7 @@ export class UserModel extends BaseModel {
     try {
       const sql = `SELECT * FROM ${this.tableName} ORDER BY created_at DESC`;
       const result = await this.executeQuery(sql);
-      return result;
+      return result.rows;
     } catch (error) {
       console.error('Error finding all users:', error);
       throw error;

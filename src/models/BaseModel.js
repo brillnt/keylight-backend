@@ -40,11 +40,11 @@ export class BaseModel {
         
         // Use knex raw query in test environment
         const result = await connection.raw(knexSql, params);
-        return result.rows;
+        return { rows: result.rows }; // Standardize format for consistency
       } else {
         // Use regular pg.Pool query in production/development
         const result = await connection.query(sql, params);
-        return result;
+        return result; // Already in correct { rows: [...] } format
       }
     } catch (error) {
       console.error(`Database query failed: ${sql}`, error);
