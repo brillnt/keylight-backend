@@ -362,4 +362,133 @@ describe('UserModel Integration Tests', () => {
       }
     });
   });
+
+  describe('Search and Filtering Integration', () => {
+    beforeEach(async () => {
+      // Insert test users with varied data for search testing
+      const testUsers = [
+        {
+          full_name: 'Alice Johnson',
+          email_address: 'alice@example.com',
+          phone_number: '555-0101'
+        },
+        {
+          full_name: 'Bob Smith',
+          email_address: 'bob@testdomain.com',
+          phone_number: '555-0102'
+        },
+        {
+          full_name: 'Charlie Johnson',
+          email_address: 'charlie@example.com',
+          phone_number: '555-0103'
+        }
+      ];
+      
+      await db('users').insert(testUsers);
+    });
+
+    it('should search users by email with real database', async () => {
+      const userModel = new UserModel();
+      
+      // Search by exact email
+      const exactResults = await userModel.searchUsers({ 
+        email: 'alice@example.com' 
+      });
+      expect(exactResults).toHaveLength(1);
+      expect(exactResults[0].full_name).toBe('Alice Johnson');
+      
+      // Search by partial email domain
+      const partialResults = await userModel.searchUsers({ 
+        email: '@example.com' 
+      });
+      expect(partialResults.length).toBeGreaterThanOrEqual(2); // Alice and Charlie
+      
+      partialResults.forEach(user => {
+        expect(user.email_address).toContain('@example.com');
+      });
+    });
+
+    it('should search users by name with real database', async () => {
+      const userModel = new UserModel();
+      
+      // Search by full name
+      const fullNameResults = await userModel.searchUsers({ 
+        name: 'Alice Johnson' 
+      });
+      expect(fullNameResults).toHaveLength(1);
+      expect(fullNameResults[0].email_address).toBe('alice@example.com');
+      
+      // Search by partial name (last name)
+      const partialResults = await userModel.searchUsers({ 
+        name: 'Johnson' 
+      });
+      expect(partialResults.length).toBe(2); // Alice and Charlie Johnson
+      
+      partialResults.forEach(user => {
+        expect(user.full_name.toLowerCase()).toContain('johnson');
+      });
+    });
+
+    it('should handle combined search criteria with real database', async () => {
+      const userModel = new UserModel();
+      
+      const results = await userModel.searchUsers({
+        name: 'Johnson',
+        email: '@example.com'
+      });
+      
+      // Should find Alice and Charlie (both Johnsons with @example.com)
+      expect(results.length).toBe(2);
+      results.forEach(user => {
+        expect(user.full_name.toLowerCase()).toContain('johnson');
+        expect(user.email_address).toContain('@example.com');
+      });
+    });
+
+    it('should handle filtering and pagination with real database', async () => {
+      const userModel = new UserModel();
+      
+      // Test pagination
+      const page1 = await userModel.findUsersWithFilters({
+        limit: 2,
+        offset: 0,
+        sortBy: 'full_name',
+        sortOrder: 'ASC'
+      });
+      
+      expect(page1.length).toBeLessThanOrEqual(2);
+      
+      // Test sorting - first user should be Alice (alphabetically first)
+      if (page1.length > 0) {
+        expect(page1[0].full_name).toBe('Alice Johnson');
+      }
+      
+      // Test second page
+      const page2 = await userModel.findUsersWithFilters({
+        limit: 2,
+        offset: 2,
+        sortBy: 'full_name',
+        sortOrder: 'ASC'
+      });
+      
+      expect(Array.isArray(page2)).toBe(true);
+    });
+
+    it('should work with static search methods', async () => {
+      // Test static searchUsers
+      const searchResults = await UserModel.searchUsers({ 
+        name: 'Bob' 
+      });
+      expect(searchResults).toHaveLength(1);
+      expect(searchResults[0].full_name).toBe('Bob Smith');
+      
+      // Test static findUsersWithFilters
+      const filterResults = await UserModel.findUsersWithFilters({
+        limit: 1,
+        sortBy: 'email_address',
+        sortOrder: 'DESC'
+      });
+      expect(filterResults.length).toBeLessThanOrEqual(1);
+    });
+  });
 });

@@ -16,13 +16,24 @@ afterAll(async () => {
   await db.destroy();
 });
 
-// Utility function for tests that need clean database state
+// Enhanced utility function for tests that need clean database state
+// Using DELETE instead of TRUNCATE to avoid deadlock issues
 export async function cleanDatabase() {
-  // Truncate tables in the correct order to avoid foreign key conflicts
-  // Child tables first, then parent tables
-  await db.raw('TRUNCATE TABLE "intake_submissions" RESTART IDENTITY CASCADE');
-  await db.raw('TRUNCATE TABLE "projects" RESTART IDENTITY CASCADE');
-  await db.raw('TRUNCATE TABLE "users" RESTART IDENTITY CASCADE');
+  try {
+    // Use DELETE instead of TRUNCATE to avoid table-level locks that cause deadlocks
+    // Delete in correct order to avoid foreign key conflicts
+    await db('intake_submissions').del();
+    await db('projects').del();  
+    await db('users').del();
+    
+    // Reset sequences manually since DELETE doesn't reset them
+    await db.raw('ALTER SEQUENCE intake_submissions_id_seq RESTART WITH 1');
+    await db.raw('ALTER SEQUENCE projects_id_seq RESTART WITH 1');
+    await db.raw('ALTER SEQUENCE users_id_seq RESTART WITH 1');
+  } catch (error) {
+    console.error('Error cleaning database:', error);
+    throw error;
+  }
 }
 
 export { db };

@@ -314,4 +314,171 @@ describe('UserModel Unit Tests', () => {
       });
     });
   });
+
+  // ===== SEARCH AND FILTERING TESTS =====
+  describe('Search and Filtering', () => {
+    describe('searchUsers() method', () => {
+      it('should return empty array when no search criteria provided', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.searchUsers();
+        expect(Array.isArray(results)).toBe(true);
+        expect(results).toEqual([]);
+      });
+
+      it('should search by email (exact match)', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.searchUsers({ email: 'john@example.com' });
+        expect(Array.isArray(results)).toBe(true);
+        // Results should have user structure
+        if (results.length > 0) {
+          expect(results[0]).toHaveProperty('id');
+          expect(results[0]).toHaveProperty('email_address');
+          expect(results[0]).toHaveProperty('full_name');
+        }
+      });
+
+      it('should search by email (partial match)', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.searchUsers({ email: '@example.com' });
+        expect(Array.isArray(results)).toBe(true);
+        // All results should contain the search term
+        results.forEach(user => {
+          expect(user.email_address.toLowerCase()).toContain('@example.com');
+        });
+      });
+
+      it('should search by full name (exact match)', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.searchUsers({ name: 'John Doe' });
+        expect(Array.isArray(results)).toBe(true);
+        // Results should match the name
+        results.forEach(user => {
+          expect(user.full_name.toLowerCase()).toContain('john doe');
+        });
+      });
+
+      it('should search by name (partial match)', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.searchUsers({ name: 'John' });
+        expect(Array.isArray(results)).toBe(true);
+        // Results should contain partial match
+        results.forEach(user => {
+          expect(user.full_name.toLowerCase()).toContain('john');
+        });
+      });
+
+      it('should handle combined search criteria', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.searchUsers({ 
+          name: 'John',
+          email: '@example.com' 
+        });
+        expect(Array.isArray(results)).toBe(true);
+        // Results should match both criteria
+        results.forEach(user => {
+          expect(user.full_name.toLowerCase()).toContain('john');
+          expect(user.email_address.toLowerCase()).toContain('@example.com');
+        });
+      });
+
+      it('should handle invalid search criteria gracefully', async () => {
+        const userModel = new UserModel();
+        
+        // Test null/undefined
+        expect(await userModel.searchUsers(null)).toEqual([]);
+        expect(await userModel.searchUsers(undefined)).toEqual([]);
+        
+        // Test empty object
+        expect(await userModel.searchUsers({})).toEqual([]);
+        
+        // Test invalid types
+        expect(await userModel.searchUsers('invalid')).toEqual([]);
+        expect(await userModel.searchUsers(123)).toEqual([]);
+      });
+    });
+
+    describe('findUsersWithFilters() method', () => {
+      it('should return paginated results', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.findUsersWithFilters({
+          limit: 2,
+          offset: 0
+        });
+        expect(Array.isArray(results)).toBe(true);
+        expect(results.length).toBeLessThanOrEqual(2);
+      });
+
+      it('should sort results by specified field', async () => {
+        const userModel = new UserModel();
+        const results = await userModel.findUsersWithFilters({
+          sortBy: 'full_name',
+          sortOrder: 'ASC',
+          limit: 10
+        });
+        expect(Array.isArray(results)).toBe(true);
+        
+        // Check if results are sorted by name
+        if (results.length > 1) {
+          for (let i = 0; i < results.length - 1; i++) {
+            const currentName = results[i].full_name.toLowerCase();
+            const nextName = results[i + 1].full_name.toLowerCase();
+            expect(currentName.localeCompare(nextName)).toBeLessThanOrEqual(0);
+          }
+        }
+      });
+
+      it('should filter by creation date range', async () => {
+        const userModel = new UserModel();
+        const today = new Date();
+        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+        
+        const results = await userModel.findUsersWithFilters({
+          createdAfter: yesterday.toISOString(),
+          createdBefore: today.toISOString()
+        });
+        expect(Array.isArray(results)).toBe(true);
+        
+        // All results should be within date range
+        results.forEach(user => {
+          const createdAt = new Date(user.created_at);
+          expect(createdAt.getTime()).toBeGreaterThanOrEqual(yesterday.getTime());
+          expect(createdAt.getTime()).toBeLessThanOrEqual(today.getTime());
+        });
+      });
+
+      it('should handle pagination edge cases', async () => {
+        const userModel = new UserModel();
+        
+        // Test invalid limit/offset
+        expect(await userModel.findUsersWithFilters({ limit: -1 })).toEqual([]);
+        expect(await userModel.findUsersWithFilters({ offset: -1 })).toEqual([]);
+        expect(await userModel.findUsersWithFilters({ limit: 0 })).toEqual([]);
+        
+        // Test very large offset
+        const results = await userModel.findUsersWithFilters({ 
+          limit: 10, 
+          offset: 999999 
+        });
+        expect(Array.isArray(results)).toBe(true);
+        expect(results.length).toBe(0);
+      });
+    });
+
+    describe('Static search methods', () => {
+      it('should provide static searchUsers method', async () => {
+        const results = await UserModel.searchUsers({ name: 'John' });
+        expect(Array.isArray(results)).toBe(true);
+      });
+
+      it('should provide static findUsersWithFilters method', async () => {
+        const results = await UserModel.findUsersWithFilters({ limit: 5 });
+        expect(Array.isArray(results)).toBe(true);
+      });
+
+      it('should handle edge cases in static methods', async () => {
+        expect(await UserModel.searchUsers(null)).toEqual([]);
+        expect(await UserModel.findUsersWithFilters(null)).toEqual([]);
+      });
+    });
+  });
 });

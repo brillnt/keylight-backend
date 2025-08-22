@@ -337,6 +337,145 @@ export class UserModel extends BaseModel {
     }
   }
 
+  /**
+   * Search users by email and/or name
+   * @param {Object} criteria - Search criteria { email?: string, name?: string }
+   * @returns {Promise<Array>} Array of matching users
+   */
+  async searchUsers(criteria) {
+    try {
+      // Handle invalid or empty criteria
+      if (!criteria || typeof criteria !== 'object' || Array.isArray(criteria)) {
+        return [];
+      }
+
+      const { email, name } = criteria;
+      
+      // Return empty if no valid search criteria provided
+      if (!email && !name) {
+        return [];
+      }
+
+      let sql = `SELECT * FROM users WHERE 1=1`;
+      const params = [];
+      let paramIndex = 1;
+
+      // Add email search (case-insensitive partial match)
+      if (email && typeof email === 'string' && email.trim()) {
+        sql += ` AND LOWER(email_address) ILIKE $${paramIndex}`;
+        params.push(`%${email.toLowerCase().trim()}%`);
+        paramIndex++;
+      }
+
+      // Add name search (case-insensitive partial match)
+      if (name && typeof name === 'string' && name.trim()) {
+        sql += ` AND LOWER(full_name) ILIKE $${paramIndex}`;
+        params.push(`%${name.toLowerCase().trim()}%`);
+        paramIndex++;
+      }
+
+      // Add ordering
+      sql += ` ORDER BY full_name ASC`;
+
+      const result = await this.executeQuery(sql, params);
+      return result.rows || [];
+    } catch (error) {
+      console.error('Error searching users:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Find users with advanced filtering, pagination, and sorting
+   * @param {Object} options - Filter options
+   * @returns {Promise<Array>} Array of filtered users
+   */
+  async findUsersWithFilters(options = {}) {
+    try {
+      // Handle invalid options
+      if (!options || typeof options !== 'object' || Array.isArray(options)) {
+        return [];
+      }
+
+      const {
+        limit = 50,
+        offset = 0,
+        sortBy = 'created_at',
+        sortOrder = 'DESC',
+        createdAfter,
+        createdBefore
+      } = options;
+
+      // Validate pagination parameters
+      if (limit <= 0 || offset < 0) {
+        return [];
+      }
+
+      // Validate sort parameters
+      const allowedSortFields = ['full_name', 'email_address', 'created_at', 'updated_at'];
+      const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+      const safeSortOrder = (sortOrder && sortOrder.toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+
+      let sql = `SELECT * FROM users WHERE 1=1`;
+      const params = [];
+      let paramIndex = 1;
+
+      // Add date range filters
+      if (createdAfter) {
+        sql += ` AND created_at >= $${paramIndex}`;
+        params.push(createdAfter);
+        paramIndex++;
+      }
+
+      if (createdBefore) {
+        sql += ` AND created_at <= $${paramIndex}`;
+        params.push(createdBefore);
+        paramIndex++;
+      }
+
+      // Add sorting, limit, and offset
+      sql += ` ORDER BY ${safeSortBy} ${safeSortOrder}`;
+      sql += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+      params.push(limit, offset);
+
+      const result = await this.executeQuery(sql, params);
+      return result.rows || [];
+    } catch (error) {
+      console.error('Error filtering users:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Static method to search users without instantiation
+   * @param {Object} criteria - Search criteria
+   * @returns {Promise<Array>} Array of matching users
+   */
+  static async searchUsers(criteria) {
+    try {
+      const tempUserModel = new UserModel();
+      return await tempUserModel.searchUsers(criteria);
+    } catch (error) {
+      console.error('Error in static searchUsers:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Static method to find users with filters without instantiation
+   * @param {Object} options - Filter options
+   * @returns {Promise<Array>} Array of filtered users
+   */
+  static async findUsersWithFilters(options) {
+    try {
+      const tempUserModel = new UserModel();
+      return await tempUserModel.findUsersWithFilters(options);
+    } catch (error) {
+      console.error('Error in static findUsersWithFilters:', error);
+      return [];
+    }
+  }
+
   // TODO: Add search and filtering capabilities
   // TODO: Override create() and updateById() with validation
 }
